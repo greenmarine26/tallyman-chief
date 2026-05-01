@@ -30,15 +30,68 @@ export const formatWt = (wt) => {
 };
 export const isoToLabel = (iso) => {
   if (!iso) return '';
-  const p = iso.toUpperCase();
-  if (p === '22GP' || p === '22G1' || p === '22G0') return '20DC';
-  if (p === '42GP' || p === '44GP' || p === '42G1') return '40DC';
-  if (p === '45GP' || p === '45G1') return '40HC';
-  if (p.length >= 3 && p[2] === 'R') return p[0] === '2' ? '20RF' : '40RF';
-  if (p.length >= 3 && p[2] === 'T') return p[0] === '2' ? '20TK' : '40TK';
-  if (p.length >= 3 && p[2] === 'U') return p[0] === '2' ? '20OT' : '40OT';
-  if (p[0] === '4') return '40' + p.substring(2, 3);
-  if (p[0] === '2') return '20' + p.substring(2, 3);
+  const p = String(iso).toUpperCase().trim().replace(/\s+/g, '');
+  
+  // === 우선 처리: 명확한 ISO 형식 (긴 패턴 먼저!) ===
+  // 40' HC 리퍼: 40HR (사용자 약식), 45R*, 4xR*
+  if (/^40HR/.test(p)) return '40RF';
+  if (/^4[245]R/.test(p)) return '40RF';
+  if (/^40R/.test(p)) return '40RF';
+  // 40' Flat Rack: 40FP, 40FR, 4[24]P
+  if (/^40F[PR]/.test(p)) return '40FR';
+  if (/^4[24]P/.test(p)) return '40FR';
+  // 45' Open Top: 45OT, 45OH, 4[24]U
+  if (/^4[245]O/.test(p)) return '40OT';
+  if (/^4[24]U/.test(p)) return '40OT';
+  // 40' Tank: 40TK, 4[24]T
+  if (/^40T/.test(p)) return '40TK';
+  if (/^4[24]T/.test(p)) return '40TK';
+  // 40' HC (general): 40HC, 4[24]H, 45G*, 43*
+  if (/^40HC/.test(p)) return '40HC';
+  if (/^4[24]H/.test(p)) return '40HC';
+  if (/^45G/.test(p)) return '40HC';
+  if (/^43/.test(p)) return '40HC';
+  // 40' DC: 40DC, 40GP, 4[24]GP
+  if (/^40[DG]/.test(p)) return '40DC';
+  if (/^4[24][G][P012]/.test(p)) return '40DC';
+  
+  // === 20피트 (긴 패턴 먼저) ===
+  // 리퍼: 20RF, 22R*
+  if (/^20R/.test(p)) return '20RF';
+  if (/^2[02][R]/.test(p)) return '20RF';
+  // Flat Rack: 20FR, 20FP, 2[02]P
+  if (/^20F[PR]/.test(p)) return '20FR';
+  if (/^2[02][P]/.test(p)) return '20FR';
+  // Open Top: 20OT, 20OH, 2[02]U
+  if (/^20O/.test(p)) return '20OT';
+  if (/^2[02][U]/.test(p)) return '20OT';
+  // Tank: 20TK, 2[02]T
+  if (/^20T/.test(p)) return '20TK';
+  if (/^2[02][T]/.test(p)) return '20TK';
+  // DC: 20GP, 20DC, 22GP
+  if (/^20[GD]/.test(p)) return '20DC';
+  if (/^2[02][G][P0-9]/.test(p)) return '20DC';
+  
+  // === fallback ===
+  if (p[0] === '4') {
+    const t = p[2];
+    if (t === 'R') return '40RF';
+    if (t === 'P' || t === 'F') return '40FR';
+    if (t === 'O' || t === 'U') return '40OT';
+    if (t === 'T') return '40TK';
+    if (t === 'H') return '40HC';
+    if (t === 'G' || t === 'D') return '40DC';
+    return '40' + (t || '?');
+  }
+  if (p[0] === '2') {
+    const t = p[2];
+    if (t === 'R') return '20RF';
+    if (t === 'P' || t === 'F') return '20FR';
+    if (t === 'O' || t === 'U') return '20OT';
+    if (t === 'T') return '20TK';
+    if (t === 'G' || t === 'D') return '20DC';
+    return '20' + (t || '?');
+  }
   return p;
 };
 
